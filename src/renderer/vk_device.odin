@@ -219,7 +219,7 @@ create_device :: proc(using state: ^VulkanState) -> bool {
     }
 
     check(vk.CreateDevice(device.physical, &device_create_info, nil, &device.logical)) or_return
-    vk.load_proc_addresses_device(device)
+    vk.load_proc_addresses_device(device.logical)
     vk.GetDeviceQueue(device.logical, device.graphics_queue_index, 0, &device.graphics_queue) 
     vk.GetDeviceQueue(device.logical, device.present_queue_index, 0, &device.present_queue)
     assert(device.graphics_queue == device.present_queue && device.graphics_queue != nil)

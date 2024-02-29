@@ -6,11 +6,16 @@ import "core:fmt"
 VulkanDevice :: struct {
     physical:               vk.PhysicalDevice,
     logical:                vk.Device,
+
+    properties:             vk.PhysicalDeviceProperties,
+    features:               vk.PhysicalDeviceFeatures,
     swapchain_support_info: VulkanSwapchainSupportInfo, 
+    
     graphics_queue_index:   u32,
     present_queue_index:    u32,
     graphics_queue:         vk.Queue,   
     present_queue:          vk.Queue,
+
     command_pool:           vk.CommandPool,
 }
 
@@ -47,8 +52,10 @@ physical_device_get_swapchain_support :: proc(
     swapchain_support_info: VulkanSwapchainSupportInfo,
     supported: bool
 ) {
-    // NOTE(matt): Check for surface support
 
+    //TODO(matt): Check up on features when we need them
+
+    // NOTE(matt): Check for surface support
     is_supported: b32
     check(vk.GetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &is_supported)) or_return
     if !is_supported {
@@ -146,8 +153,15 @@ select_physical_device :: proc(using state: ^VulkanState) -> bool {
 
     physical_devices := make([]vk.PhysicalDevice, physical_device_count)
     defer delete(physical_devices)
-    check(vk.EnumeratePhysicalDevices(instance, &physical_device_count, raw_data(physical_devices))) or_return
-    // TODO(chowie): Do we need VK_INCOMPLETE for checking?
+
+    // TODO(matt): Remove the cast at some point
+    check(
+        vk.EnumeratePhysicalDevices(instance, &physical_device_count, raw_data(physical_devices)),
+        []vk.Result{ 
+            .SUCCESS,
+            .INCOMPLETE,
+        },
+    ) or_return
 
     for &physical_device in physical_devices {
         properties: vk.PhysicalDeviceProperties
@@ -178,11 +192,15 @@ select_physical_device :: proc(using state: ^VulkanState) -> bool {
         // NOTE(matt): Check that device meets requirements
         queue_family_info, swapchain_support_info := physical_device_meets_requirements(physical_device, surface, properties, features, requirements) or_continue
 
-        // NOTE(matt): Queue family stuff
+        // NOTE(matt): Physical device profiling
         device.physical = physical_device
+        device.properties = properties
+        device.features = features
+        
+        // NOTE(matt): Queue family stuff
+        device.swapchain_support_info = swapchain_support_info
         device.graphics_queue_index = u32(queue_family_info.graphics_queue_index)
         device.present_queue_index = u32(queue_family_info.graphics_queue_index)
-        device.swapchain_support_info = swapchain_support_info
 
         fmt.printf("%#v\n%#v\n", queue_family_info, swapchain_support_info)
         return true
@@ -215,7 +233,7 @@ create_device :: proc(using state: ^VulkanState) -> bool {
         pQueueCreateInfos = &queue_create_info,
         enabledExtensionCount = u32(len(enabled_device_extensions)),
         ppEnabledExtensionNames = raw_data(enabled_device_extensions),
-	// TODO(chowie): Usually you want to pass pEnabledFeatures inside here with PhysicalDeviceFeatures()! Otherwise, passing 0 disables features
+        pEnabledFeatures = &device.features,
     }
 
     check(vk.CreateDevice(device.physical, &device_create_info, nil, &device.logical)) or_return

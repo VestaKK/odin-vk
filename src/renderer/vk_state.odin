@@ -14,9 +14,7 @@ VulkanState :: struct {
 
     window: struct {
         handle:             glfw.WindowHandle,
-	    using dim: struct {
-            width, height: u32 
-        }
+        using dim:          vk.Extent2D,
     },
 
     instance:               vk.Instance,

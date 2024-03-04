@@ -10,22 +10,24 @@ import "core:strings"
 
 // NOTE(chowie): This is a list of layers we would like, but is not
 // strictly neccessary!
-
-when ODIN_DEBUG {
-    enabled_layers :: []cstring { "VK_LAYER_KHRONOS_validation", }
-}
+when ODIN_DEBUG do enabled_layers :: []cstring { "VK_LAYER_KHRONOS_validation", }
 
 // TODO(matt): Sorta temporary, ideally we have a platform thing for this tbh
 // TODO(chowie): This really feels like this should be segregate by mandatory and desired!
 enabled_instance_extensions :: []cstring{
     vk.KHR_SURFACE_EXTENSION_NAME, // NOTE(chowie): Mandatory for outputting a window or "surface"
-    vk.KHR_WIN32_SURFACE_EXTENSION_NAME,
+    vk.KHR_WIN32_SURFACE_EXTENSION_NAME, // TODO(chowie): Segregate this with #define VK_USE_PLATFORM_WIN32_KHR ideally
 
-    // DEBUG
+    //
+    // Debug
+    //
 
-    vk.EXT_DEBUG_UTILS_EXTENSION_NAME, 
+    vk.EXT_DEBUG_UTILS_EXTENSION_NAME, // TODO(chowie): Use this! And only set with ODIN_DEBUG. And technically, this is deprecated too as of 1.3, should be "VK_EXT_debug_utils"
 }
 
+// TODO(chowie): I've made callbacks in the past, this is where I'd use #define
+// cast the function into a type -> added in vulkan-specific struct.
+// Ask Matt if he wants to try this!
 debug_utils_messenger_callback :: proc "system" (
     messageSeverity: vk.DebugUtilsMessageSeverityFlagsEXT,
     messageTypes: vk.DebugUtilsMessageTypeFlagsEXT,
@@ -71,6 +73,7 @@ check_layer_support :: proc(requested_layers: []cstring) -> bool {
     defer delete(instance_layers)
     check(vk.EnumerateInstanceLayerProperties(&layer_count, raw_data(instance_layers))) or_return
 
+    // TODO(chowie): Ask matt what "outer:" here means exactly?
     outer: for &requested in  requested_layers {
         for &existing in instance_layers {
             if requested == cstring(raw_data(existing.layerName[:])) {
@@ -117,7 +120,7 @@ create_instance :: proc(using state: ^VulkanState) -> bool {
             pfnUserCallback = debug_utils_messenger_callback,
         }
 
-        // NOTE(matt): Extend create_info to deal with validation layers
+        // TODO(matt): Extend create_info to deal with validation layers
         instance_create_info.enabledLayerCount = cast(u32) len(enabled_layers)
         instance_create_info.ppEnabledLayerNames = raw_data(enabled_layers)
 
@@ -129,10 +132,11 @@ create_instance :: proc(using state: ^VulkanState) -> bool {
     } else {
 
         // NOTE(matt): Debug utils is the last extension, so we reduce the count to disinclude it
-        // TODO(matt): Reduce Jank
         instance_create_info.enabledExtensionCount = cast(u32) (len(enabled_instance_extensions) - 1)
         instance_create_info.ppEnabledExtensionNames = raw_data(enabled_instance_extensions) 
     }
+
+    // TODO(chowie): We have no need for extension array, probably should be freed! Memory arena?
 
     // NOTE(matt): Create instance and load function pointers
     check(vk.CreateInstance(&instance_create_info, nil, &instance)) or_return   

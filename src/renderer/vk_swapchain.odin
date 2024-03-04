@@ -17,7 +17,7 @@ create_swapchain :: proc(using state: ^VulkanState) -> bool {
 
     // NOTE(matt): Check swapchain supports image format
     // TODO(chowie): _Block for 4x4 reading, or _PACK32?
-    swapchain.format = vk.Format.B8G8R8A8_UNORM
+    swapchain.format = vk.Format.B8G8R8A8_SRGB
     swapchain.colour_space = vk.ColorSpaceKHR.SRGB_NONLINEAR
 
     // RESOURCE: https://ciechanow.ski/alpha-compositing/
@@ -73,11 +73,11 @@ create_swapchain :: proc(using state: ^VulkanState) -> bool {
         check(vk.CreateImageView(device.logical, &image_view_create_info, nil, &swapchain.image_views[index] )) or_return
     }
 
-    // semaphore_create_info := vk.SemaphoreCreateInfo {
-    // 	sType = .SEMAPHORE_CREATE_INFO,
-    // }
+    semaphore_create_info := vk.SemaphoreCreateInfo {
+    	sType = .SEMAPHORE_CREATE_INFO,
+    }
 
-    // check(vk.CreateSemaphore(device.logical, &semaphore_create_info, nil, &swapchain.semaphore )) or_return
+    check(vk.CreateSemaphore(device.logical, &semaphore_create_info, nil, &swapchain.semaphore )) or_return
 
     return true
 }

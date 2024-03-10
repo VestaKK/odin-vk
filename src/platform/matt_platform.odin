@@ -16,7 +16,6 @@ package platform
 //
 //
 
-// TODO(chowie): Investigate why these are not connecting!
 // NOTE(chowie): Standards types
 s32 :: i32;
 umm :: uintptr;

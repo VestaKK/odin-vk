@@ -56,7 +56,7 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
     render_pass_create_info := vk.RenderPassCreateInfo{
         sType = .RENDER_PASS_CREATE_INFO,
         attachmentCount = u32(len(render_pass.attachment)),
-        pAttachments = &render_pass.attachment[0], // TODO(chowie): Ask Matt how the hell do you do a pointer to the array?
+        pAttachments = raw_data(render_pass.attachment[:]),
         subpassCount = 1,
         pSubpasses = &sub_pass_description,
     }

@@ -16,14 +16,15 @@ package platform
 //
 //
 
-// NOTE(Chowie): Standards types
-s32 :: i32
-umm :: uintptr
-r32 :: f32
-r64 :: f64
+// TODO(chowie): Investigate why these are not connecting!
+// NOTE(chowie): Standards types
+s32 :: i32;
+umm :: uintptr;
+r32 :: f32;
+r64 :: f64;
 
-Pi32 :: 3.14159265359
-Tau32 :: 6.28318530717958647692
+Pi32 :: 3.14159265359;
+Tau32 :: 6.28318530717958647692;
 
 //
 //

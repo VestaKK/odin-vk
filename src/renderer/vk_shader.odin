@@ -5,18 +5,6 @@ import win32 "core:sys/windows"
 import "core:fmt"
 import "core:strings"
 
-LARGE_INTEGER :: struct #raw_union {
-    DUMMYSTRUCTNAME: struct {
-        LowPart  : u32,
-        HighPart : i32,
-    },
-    u: struct {
-        LowPart  : u32,
-        HighPart : i32,
-    },
-    QuadPart     : i64,
-}
-
 VulkanShader :: struct {
     file: []u8,
 }
@@ -28,11 +16,7 @@ safe_truncate_u64 :: proc(value: u64) -> u32 {
      return result
 }
 
-/*
 // TODO(chowie): Double check this all compiles well!
-// TODO(chowie): Ask Matt if there's equivalent windows lib in odin!
-*/
-
 win32_read_file :: proc(filename: string) -> (file: []u8, ok: bool) {
 
     file_handle := win32.CreateFileW(
@@ -55,7 +39,7 @@ win32_read_file :: proc(filename: string) -> (file: []u8, ok: bool) {
 
     content = win32.VirtualAlloc(nil, uint(file_size_u32), win32.MEM_RESERVE | win32.MEM_COMMIT, win32.PAGE_READWRITE)
     assert(content != nil)
-    // defer win32.VirtualFree(content, 0, win32.MEM_RELEASE) NOTE(MATT): Error Handling
+    // defer win32.VirtualFree(content, 0, win32.MEM_RELEASE) NOTE(matt): Error Handling?
 
     bytes_read: win32.DWORD
     win32.ReadFile(file_handle, content, file_size_u32, &bytes_read, nil) or_return
@@ -64,11 +48,15 @@ win32_read_file :: proc(filename: string) -> (file: []u8, ok: bool) {
     return (transmute([^]u8)content)[:file_size_u32], true
 } 
 
-create_shaders :: proc(using state: ^VulkanState) -> bool {
+create_shaders :: proc(using state: ^VulkanState, shader: VulkanShader) -> bool {
+
+    vert_file, vert_error := win32_read_file("res/shaders/vert.spv")
+    frag_file, frag_error := win32_read_file("res/shaders/frag.spv")
 
     vertex_info := vk.ShaderModuleCreateInfo {
         sType = .SHADER_MODULE_CREATE_INFO,
-//	codeSize = file_result.content_size,
+//	codeSize = int(vert_file[:]),
+//	pCode = raw_data(vert_file[:]),
     }
 
     return true

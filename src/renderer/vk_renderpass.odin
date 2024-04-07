@@ -4,14 +4,20 @@ import vk "vendor:vulkan"
 
 VulkanRenderPass :: struct {
     internal: vk.RenderPass,
-    attachment: [2]vk.AttachmentDescription,
 }
+
 
 create_render_pass :: proc(using state: ^VulkanState) -> bool {
 
-    // TODO(chowie): Test this code!
-    // NOTE(chowie): Colour attachment
-    render_pass.attachment[0] = {
+    attachments: struct #raw_union {
+        using _ : struct {
+            color: vk.AttachmentDescription,
+            depth: vk.AttachmentDescription,
+        },
+        all: [2]vk.AttachmentDescription,   
+    }
+
+    attachments.color = {
         format      = swapchain.format,
         samples     = {._1},
         loadOp      = .CLEAR,
@@ -22,8 +28,7 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
         finalLayout = .PRESENT_SRC_KHR,
     }
 
-    // NOTE(chowie): Depth/stencil attachment
-    render_pass.attachment[1] = {
+    attachments.depth = {
         format      = .D24_UNORM_S8_UINT,
         samples     = {._1},
         loadOp      = .CLEAR,
@@ -35,12 +40,12 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
     }
 
     colour_attachment_ref := vk.AttachmentReference{
-        attachment  = 0, // NOTE(chowie): Index into []Attachment
+        attachment  = 0, // Colour Index
         layout      = .COLOR_ATTACHMENT_OPTIMAL,
     }
 
     depth_attachment_ref := vk.AttachmentReference{
-        attachment  = 1, // NOTE(chowie): Index into []Attachment
+        attachment  = 1, // Depth Index
         layout      = .DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     }
 
@@ -48,15 +53,15 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
         pipelineBindPoint = .GRAPHICS,
         colorAttachmentCount = 1,
         pColorAttachments = &colour_attachment_ref,
-	pDepthStencilAttachment = &depth_attachment_ref,
+	    pDepthStencilAttachment = &depth_attachment_ref,
     }
 
     // NOTE(MATT): do subpass dependencies
 
     render_pass_create_info := vk.RenderPassCreateInfo{
         sType = .RENDER_PASS_CREATE_INFO,
-        attachmentCount = u32(len(render_pass.attachment)),
-        pAttachments = raw_data(render_pass.attachment[:]),
+        attachmentCount = u32(len(attachments.all)),
+        pAttachments = raw_data(attachments.all[:]),
         subpassCount = 1,
         pSubpasses = &sub_pass_description,
     }

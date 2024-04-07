@@ -28,7 +28,9 @@ VulkanState :: struct {
     debug_messenger:        vk.DebugUtilsMessengerEXT,
     device:                 VulkanDevice,
     swapchain:              VulkanSwapchain,
+    shaders:                VulkanShaderStore,
     render_pass:            VulkanRenderPass,
+    graphics_pipeline:      VulkanGraphicsPipeline,
 }
 
 // NOTE(matt): Loads vulkan lib at startup because that kinda just makes sense ig
@@ -88,6 +90,7 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
     create_surface(state) or_return 
     create_device(state) or_return
     create_swapchain(state) or_return
+    create_shaders(state) or_return
     create_render_pass(state) or_return
 
     return true
@@ -95,6 +98,7 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
 
 shutdown :: proc(using state: ^VulkanState) {
     destroy_render_pass(&device, &render_pass)
+    destroy_shaders(&device, &shaders)
     destroy_swapchain(&device, &swapchain)
     destroy_vulkan_device(&device)
     vk.DestroySurfaceKHR(instance, surface, nil)

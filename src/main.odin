@@ -35,7 +35,7 @@ main :: proc() {
 			mem.tracking_allocator_destroy(&track)
 		}
 	}
-
+   
     // TODO(chowie): Ideally this should be wrapped in with creating a
     // Win32 window! Windows should serve the graphics, not graphics
     // serve the window (that's stupid)!

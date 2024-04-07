@@ -94,8 +94,10 @@ recreate_swapchain :: proc(using state: ^VulkanState) -> bool {
 
 destroy_swapchain :: proc(device: ^VulkanDevice, using swapchain: ^VulkanSwapchain) { 
 
-    for &framebuffer in framebuffers {
+    vk.DestroySemaphore(device.logical, swapchain.semaphore, nil)
 
+    for &framebuffer in framebuffers {
+        vk.DestroyFramebuffer(device.logical, framebuffer, nil)
     }
 
     for &image_view in image_views {

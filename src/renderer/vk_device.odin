@@ -185,7 +185,7 @@ select_physical_device :: proc(using state: ^VulkanState) -> bool {
         device.present_queue_index = u32(queue_family_info.graphics_queue_index)
         device.swapchain_support_info = swapchain_support_info
 
-        fmt.printf("%#v\n%#v\n", queue_family_info, swapchain_support_info)
+        // fmt.printf("%#v\n%#v\n", queue_family_info, swapchain_support_info)
         return true
     }
 

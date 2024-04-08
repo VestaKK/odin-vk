@@ -28,7 +28,7 @@ VulkanState :: struct {
     debug_messenger:        vk.DebugUtilsMessengerEXT,
     device:                 VulkanDevice,
     swapchain:              VulkanSwapchain,
-    shaders:                VulkanShaderStore,
+    shader_store:                VulkanShaderStore,
     render_pass:            VulkanRenderPass,
     graphics_pipeline:      VulkanGraphicsPipeline,
 }
@@ -98,7 +98,7 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
 
 shutdown :: proc(using state: ^VulkanState) {
     destroy_render_pass(&device, &render_pass)
-    destroy_shaders(&device, &shaders)
+    destroy_shaders(&device, &shader_store)
     destroy_swapchain(&device, &swapchain)
     destroy_vulkan_device(&device)
     vk.DestroySurfaceKHR(instance, surface, nil)

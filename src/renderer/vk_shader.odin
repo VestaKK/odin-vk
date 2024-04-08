@@ -10,12 +10,13 @@ VulkanShader :: struct {
     module: vk.ShaderModule,
 }
 
-VulkanShaderStore :: struct #raw_union {
-    using _: struct {
-        vert: VulkanShader,
-        frag: VulkanShader,
-    },
-    all: [2]VulkanShader,
+Shader :: enum {
+    Vert,
+    Frag,
+}
+
+VulkanShaderStore :: struct {
+    shaders: [len(Shader)]VulkanShader
 }
 
 create_shaders :: proc(using state: ^VulkanState) -> bool {
@@ -37,14 +38,14 @@ create_shaders :: proc(using state: ^VulkanState) -> bool {
         pCode = cast(^u32)raw_data(vert_file),
     }
 
-    check(vk.CreateShaderModule(device.logical, &frag_create_info, nil, &shaders.frag.module)) or_return
-    check(vk.CreateShaderModule(device.logical, &vert_create_info, nil, &shaders.vert.module)) or_return
+    check(vk.CreateShaderModule(device.logical, &frag_create_info, nil, &shader_store.shaders[Shader.Frag].module)) or_return
+    check(vk.CreateShaderModule(device.logical, &vert_create_info, nil, &shader_store.shaders[Shader.Vert].module)) or_return
 
     return true
 }
 
-destroy_shaders :: proc(device: ^VulkanDevice, shaders: ^VulkanShaderStore) {
-    for shader in shaders.all {
+destroy_shaders :: proc(device: ^VulkanDevice, shader_store: ^VulkanShaderStore) {
+    for shader in shader_store.shaders {
         vk.DestroyShaderModule(device.logical, shader.module, nil)
     }
 }

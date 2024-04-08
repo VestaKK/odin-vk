@@ -34,29 +34,24 @@ debug_utils_messenger_callback :: proc "system" (
     pCallbackData: ^vk.DebugUtilsMessengerCallbackDataEXT, 
     pUserData: rawptr
 ) -> b32 {
-
     context = runtime.default_context()
-    severity_map := map[vk.DebugUtilsMessageSeverityFlagEXT]rune{
-        .VERBOSE = 'V',
-        .INFO = 'I',
-        .WARNING = 'W',
-        .ERROR = 'E',
+
+    @(static) // treat as readonly
+    severity_map := #sparse[vk.DebugUtilsMessageSeverityFlagEXT]rune {
+        .VERBOSE =  'V',
+        .INFO    =  'I',
+        .ERROR   =  'E',
+        .WARNING =  'W', 
     }
 
-    severity_index := map[vk.DebugUtilsMessageSeverityFlagEXT]int{
-        .VERBOSE = 0,
-        .INFO = 1,
-        .ERROR = 2,
-        .WARNING = 3,
-    }
-
-    builder := strings.builder_make_len(4)
+    // build the string
+    builder := strings.builder_make_len(len(vk.DebugUtilsMessengerCreateFlagEXT))
     defer strings.builder_destroy(&builder)
     for severity in vk.DebugUtilsMessageSeverityFlagEXT {
-        if letter := severity_map[severity]; severity in messageSeverity {
-            strings.write_encoded_rune(&builder, letter, write_quote=false)
+        if severity in messageSeverity {
+            strings.write_encoded_rune(&builder, severity_map[severity], write_quote = false)
         } else {
-            strings.write_encoded_rune(&builder, '_', write_quote=false)
+            strings.write_encoded_rune(&builder, '_', write_quote = false)
         }
     }
     severity_string := strings.to_string(builder)

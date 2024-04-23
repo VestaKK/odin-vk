@@ -3,7 +3,6 @@ package renderer
 import "core:fmt"
 import vk "vendor:vulkan"
 
-// TODO(chowie): This should probably be segregated by Graphics API with #define
 check_with_exceptions :: proc(result: vk.Result, other: map[vk.Result]bool, location := #caller_location) -> bool {
     if result == .SUCCESS || other[result] {
         return true

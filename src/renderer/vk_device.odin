@@ -5,7 +5,7 @@ import "core:fmt"
 
 VulkanDevice :: struct {
     physical:               vk.PhysicalDevice,
-    logical:                vk.Device,
+    handle:                vk.Device,
     swapchain_support_info: VulkanSwapchainSupportInfo,
 
     graphics_queue_index:   u32,
@@ -219,9 +219,9 @@ create_device :: proc(using state: ^VulkanState) -> bool {
 	// TODO(chowie): Usually you want to pass pEnabledFeatures inside here with PhysicalDeviceFeatures()! Otherwise, passing 0 disables features
     }
 
-    check(vk.CreateDevice(device.physical, &device_create_info, nil, &device.logical)) or_return
-    vk.GetDeviceQueue(device.logical, device.graphics_queue_index, 0, &device.graphics_queue) 
-    vk.GetDeviceQueue(device.logical, device.present_queue_index, 0, &device.present_queue)
+    check(vk.CreateDevice(device.physical, &device_create_info, nil, &device.handle)) or_return
+    vk.GetDeviceQueue(device.handle, device.graphics_queue_index, 0, &device.graphics_queue) 
+    vk.GetDeviceQueue(device.handle, device.present_queue_index, 0, &device.present_queue)
     assert(device.graphics_queue == device.present_queue && device.graphics_queue != nil)
 
     command_pool_create_info := vk.CommandPoolCreateInfo{
@@ -229,15 +229,15 @@ create_device :: proc(using state: ^VulkanState) -> bool {
         flags = {.TRANSIENT},
         queueFamilyIndex = device.graphics_queue_index,
     }
-    vk.CreateCommandPool(device.logical, &command_pool_create_info, nil, &device.command_pool)
+    vk.CreateCommandPool(device.handle, &command_pool_create_info, nil, &device.command_pool)
 
     return true
 }
 
 destroy_vulkan_device :: proc(using device: ^VulkanDevice) {
 
-    vk.DestroyCommandPool(device.logical, device.command_pool, nil)
+    vk.DestroyCommandPool(device.handle, device.command_pool, nil)
     delete(swapchain_support_info.formats)
     delete(swapchain_support_info.present_modes)
-    vk.DestroyDevice(logical, nil)
+    vk.DestroyDevice(handle, nil)
 }

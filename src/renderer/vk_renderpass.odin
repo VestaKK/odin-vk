@@ -3,73 +3,87 @@ package renderer
 import vk "vendor:vulkan"
 
 VulkanRenderPass :: struct {
-    internal: vk.RenderPass,
+    handle: vk.RenderPass,
 }
 
+// TODO(Matt): Add Depth Buffer stuff after render triangle
+VulkanAttachmentType :: enum {
+    FrameBuffer,
+    // Depth,
+}
+
+VulkanAttachment :: struct {
+    type: VulkanAttachmentType,
+    layout: vk.ImageLayout,
+    desc: vk.AttachmentDescription,
+}
+
+record_attachment :: proc(
+    attachments: ^[VulkanAttachmentType]vk.AttachmentDescription,
+    attachment_refs: ^[VulkanAttachmentType]vk.AttachmentReference,
+    attachment: VulkanAttachment) 
+{
+    attachments[attachment.type] = attachment.desc
+    attachment_refs[attachment.type] = { u32(attachment.type), attachment.layout }
+}
 
 create_render_pass :: proc(using state: ^VulkanState) -> bool {
 
-    attachments: struct #raw_union {
-        using _ : struct {
-            color: vk.AttachmentDescription,
-            depth: vk.AttachmentDescription,
-        },
-        all: [2]vk.AttachmentDescription,   
+    attachments: [VulkanAttachmentType]vk.AttachmentDescription
+    attachment_refs: [VulkanAttachmentType]vk.AttachmentReference
+    color_attachment := VulkanAttachment{
+        type = .FrameBuffer,
+        layout = .COLOR_ATTACHMENT_OPTIMAL,
+        desc = {
+            format      = swapchain.format,
+            samples     = {._1},
+            loadOp      = .CLEAR,
+            storeOp     = .STORE,
+            stencilLoadOp = .CLEAR,
+            stencilStoreOp = .STORE,
+            initialLayout = .UNDEFINED,
+            finalLayout = .PRESENT_SRC_KHR,
+        }
     }
-
-    attachments.color = {
-        format      = swapchain.format,
-        samples     = {._1},
-        loadOp      = .CLEAR,
-        storeOp     = .STORE,
-        stencilLoadOp = .CLEAR,
-        stencilStoreOp = .STORE,
-        initialLayout = .UNDEFINED,
-        finalLayout = .PRESENT_SRC_KHR,
+    record_attachment(&attachments, &attachment_refs, color_attachment)
+/*    
+    depth_attachment := VulkanAttachment{
+        type = .Depth,
+        layout = .DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        desc = {
+            format      = .D24_UNORM_S8_UINT,
+            samples     = {._1},
+            loadOp      = .CLEAR,
+            storeOp     = .STORE,
+            stencilLoadOp = .CLEAR,
+            stencilStoreOp = .STORE,
+            initialLayout = .UNDEFINED,
+            finalLayout = .DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        }
     }
-
-    attachments.depth = {
-        format      = .D24_UNORM_S8_UINT,
-        samples     = {._1},
-        loadOp      = .CLEAR,
-        storeOp     = .STORE,
-        stencilLoadOp = .CLEAR,
-        stencilStoreOp = .STORE,
-        initialLayout = .UNDEFINED,
-        finalLayout = .DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    }
-
-    colour_attachment_ref := vk.AttachmentReference{
-        attachment  = 0, // Colour Index
-        layout      = .COLOR_ATTACHMENT_OPTIMAL,
-    }
-
-    depth_attachment_ref := vk.AttachmentReference{
-        attachment  = 1, // Depth Index
-        layout      = .DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-    }
+    record_attachment(&attachments, &attachment_refs, depth_attachment)
+*/
 
     sub_pass_description := vk.SubpassDescription{
         pipelineBindPoint = .GRAPHICS,
         colorAttachmentCount = 1,
-        pColorAttachments = &colour_attachment_ref,
-	    pDepthStencilAttachment = &depth_attachment_ref,
+        pColorAttachments = &attachment_refs[.FrameBuffer],
+	    //pDepthStencilAttachment = &attachment_refs[.Depth],
     }
 
     // NOTE(MATT): do subpass dependencies
-
-    render_pass_create_info := vk.RenderPassCreateInfo{
+    create_info := vk.RenderPassCreateInfo{
         sType = .RENDER_PASS_CREATE_INFO,
-        attachmentCount = u32(len(attachments.all)),
-        pAttachments = raw_data(attachments.all[:]),
+        attachmentCount = len(attachments),
+        pAttachments = ([^]vk.AttachmentDescription)(&attachments),
         subpassCount = 1,
         pSubpasses = &sub_pass_description,
     }
+    check(vk.CreateRenderPass(device.handle, &create_info, nil, &render_pass.handle)) or_return
 
-    check(vk.CreateRenderPass(device.logical, &render_pass_create_info, nil, &render_pass.internal)) or_return
     return true
 }
 
 destroy_render_pass :: proc(device: ^VulkanDevice, render_pass: ^VulkanRenderPass) {
-    vk.DestroyRenderPass(device.logical, render_pass.internal, nil)
+    vk.DestroyRenderPass(device.handle, render_pass.handle, nil)
 }

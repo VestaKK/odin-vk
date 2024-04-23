@@ -28,7 +28,7 @@ VulkanState :: struct {
     debug_messenger:        vk.DebugUtilsMessengerEXT,
     device:                 VulkanDevice,
     swapchain:              VulkanSwapchain,
-    shader_store:                VulkanShaderStore,
+    shaders:                [Shader]VulkanShader,
     render_pass:            VulkanRenderPass,
     graphics_pipeline:      VulkanGraphicsPipeline,
 }
@@ -85,7 +85,6 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
 
     // NOTE(matt): Load the vulkan-1.dll
     load_vulkan_dynlib() or_return
-
     create_instance(state) or_return
     create_surface(state) or_return 
     create_device(state) or_return
@@ -98,11 +97,15 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
 
 shutdown :: proc(using state: ^VulkanState) {
     destroy_render_pass(&device, &render_pass)
-    destroy_shaders(&device, &shader_store)
+    destroy_shaders(&device, &shaders)
     destroy_swapchain(&device, &swapchain)
     destroy_vulkan_device(&device)
     vk.DestroySurfaceKHR(instance, surface, nil)
-    vk.DestroyDebugUtilsMessengerEXT(instance, debug_messenger, nil)
+    
+    when ODIN_DEBUG {
+        vk.DestroyDebugUtilsMessengerEXT(instance, debug_messenger, nil)
+    }
+
     vk.DestroyInstance(instance, nil)
     unload_vulkan_dynlib()
 }

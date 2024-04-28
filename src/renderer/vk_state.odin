@@ -69,6 +69,7 @@ unload_vulkan_dynlib :: proc() {
     }
 }
 
+
 init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width: u32, height: u32) -> bool { 
 
     //
@@ -91,11 +92,20 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
     create_swapchain(state) or_return
     create_shaders(state) or_return
     create_render_pass(state) or_return
+    create_graphics_pipeline(state) or_return
+    create_frame_buffers(state) or_return
 
     return true
 }
 
+
+draw :: proc(using state: ^VulkanState) {
+    
+}
+
 shutdown :: proc(using state: ^VulkanState) {
+    destroy_frame_buffers(&device, &swapchain.frame_buffers)
+    destroy_graphics_pipeline(&device, &graphics_pipeline)
     destroy_render_pass(&device, &render_pass)
     destroy_shaders(&device, &shaders)
     destroy_swapchain(&device, &swapchain)

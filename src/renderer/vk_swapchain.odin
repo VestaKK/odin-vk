@@ -10,13 +10,14 @@ VulkanSwapchain :: struct {
     viewport:       vk.Viewport,
     scissor:        vk.Rect2D,
     colour_space:   vk.ColorSpaceKHR,
+    image_count:    u32,
     images:         []vk.Image,
     image_views:    []vk.ImageView,
-    // framebuffers:   []vk.Framebuffer,
+    frame_buffers:   []vk.Framebuffer,
     // semaphore:      vk.Semaphore,
 }
 
-create_swapchain :: proc(using state: ^VulkanState) -> bool {
+create_swapchain :: proc(using state: ^VulkanState, image_count:= u32(2)) -> bool {
 
     // NOTE(matt): Check swapchain supports image format
     // TODO(chowie): _Block for 4x4 reading, or _PACK32?
@@ -58,11 +59,10 @@ create_swapchain :: proc(using state: ^VulkanState) -> bool {
         extent = swapchain.extent 
     }
     // NOTE(matt): Technically we should clean up on failure but this is like taking a piss in an ocean
-    image_count := u32(2)
-    swapchain.images = make([]vk.Image, image_count)
-    swapchain.image_views = make([]vk.ImageView, image_count)
-    // swapchain.framebuffers = make([]vk.Framebuffer, image_count) 
-    check(vk.GetSwapchainImagesKHR(device.handle, swapchain.handle, &image_count, raw_data(swapchain.images))) or_return
+    swapchain.image_count = image_count
+    swapchain.images = make([]vk.Image, swapchain.image_count)
+    swapchain.image_views = make([]vk.ImageView, swapchain.image_count)
+    check(vk.GetSwapchainImagesKHR(device.handle, swapchain.handle, &swapchain.image_count, raw_data(swapchain.images))) or_return
 
     // TODO(chowie): I'd be interested to see if we can do our own swizzle components
     for &image, index in swapchain.images {
@@ -87,6 +87,7 @@ create_swapchain :: proc(using state: ^VulkanState) -> bool {
         } 
         check(vk.CreateImageView(device.handle, &image_view_create_info, nil, &swapchain.image_views[index] )) or_return
     }
+
 /*
     semaphore_create_info := vk.SemaphoreCreateInfo {
     	sType = .SEMAPHORE_CREATE_INFO,
@@ -95,6 +96,33 @@ create_swapchain :: proc(using state: ^VulkanState) -> bool {
     check(vk.CreateSemaphore(device.handle, &semaphore_create_info, nil, &swapchain.semaphore )) or_return
 */
     return true
+}
+
+create_frame_buffers :: proc(using state: ^VulkanState) -> bool {
+
+    swapchain.frame_buffers = make([]vk.Framebuffer, swapchain.image_count) 
+    for &frame_buffer, i in swapchain.frame_buffers {
+        frame_buffer_create_info := vk.FramebufferCreateInfo{
+            sType = .FRAMEBUFFER_CREATE_INFO,
+            renderPass = render_pass.handle,
+            width = swapchain.extent.width,
+            height = swapchain.extent.height,
+            attachmentCount = 1,
+            pAttachments = &swapchain.image_views[i],
+            layers = 1,
+        }
+
+        check(vk.CreateFramebuffer(device.handle, &frame_buffer_create_info, nil, &frame_buffer)) or_return
+    }
+
+    return true
+}
+
+destroy_frame_buffers :: proc(device: ^VulkanDevice, frame_buffers: ^[]vk.Framebuffer) {
+    for &frame_buffer in frame_buffers {
+        vk.DestroyFramebuffer(device.handle, frame_buffer, nil)
+    }
+    delete(frame_buffers^)
 }
 
 recreate_swapchain :: proc(using state: ^VulkanState) -> bool {

@@ -13,7 +13,6 @@ Width :: 640
 Height :: 480
 
 main :: proc() {
-
 	when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
 		mem.tracking_allocator_init(&track, context.allocator)

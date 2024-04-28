@@ -3,14 +3,15 @@ package renderer
 import vk "vendor:vulkan"
 import "core:math/linalg"
 import "core:reflect"
+import "core:math/linalg/glsl"
 VulkanGraphicsPipeline :: struct {
     handle: vk.Pipeline,
 	layout: vk.PipelineLayout,
 }
 
 Vertex :: struct {
-	pos: linalg.Vector3f32,
-	color: linalg.Vector3f32,
+	pos: glsl.vec3,
+	color: glsl.vec3,
 }
 vertices := []Vertex{
 	{pos =  { 0.0, -0.5,  0.0}, color = {1.0, 0.0, 0.0}},
@@ -89,12 +90,11 @@ GraphicsPipelineCreateInfo :: struct {
 		primitiveRestartEnable = false,
 	}
 
+	// Viewport and scissor will be binded dynamically in the command buffer
 	viewport_state := vk.PipelineViewportStateCreateInfo{
 		sType = .PIPELINE_VIEWPORT_STATE_CREATE_INFO,
 		viewportCount = 1,
-		pViewports = &swapchain.viewport,
 		scissorCount = 1,
-		pScissors = &swapchain.scissor,
 	}
 	
 	rast_state := vk.PipelineRasterizationStateCreateInfo{
@@ -120,6 +120,8 @@ GraphicsPipelineCreateInfo :: struct {
 		sType = .PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		attachmentCount = 1,
 		pAttachments = &color_blend_attachment,
+		logicOpEnable = false,
+		logicOp = .CLEAR,
 	}
 
 	dynamic_states := []vk.DynamicState{.VIEWPORT, .SCISSOR}

@@ -68,7 +68,6 @@ check_layer_support :: proc(requested_layers: []cstring) -> bool {
     defer delete(instance_layers)
     check(vk.EnumerateInstanceLayerProperties(&layer_count, raw_data(instance_layers))) or_return
 
-    // TODO(chowie): Ask matt what "outer:" here means exactly?
     outer: for &requested in  requested_layers {
         for &existing in instance_layers {
             if requested == cstring(raw_data(existing.layerName[:])) {
@@ -104,14 +103,8 @@ create_instance :: proc(using state: ^VulkanState) -> bool {
         // NOTE(matt): Debug util stuff
         debug_messenger_utils_create_info := vk.DebugUtilsMessengerCreateInfoEXT{
             sType = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-            messageSeverity  = {
-                .WARNING,
-                .ERROR,
-            },
-            messageType = {
-                .VALIDATION, 
-                .GENERAL,
-            },
+            messageSeverity  = { .WARNING, .ERROR },
+            messageType = { .VALIDATION, .GENERAL },
             pfnUserCallback = debug_utils_messenger_callback,
         }
 

@@ -49,11 +49,11 @@ check :: proc{
     check_custom,
 }
 
-check_custom :: proc(result: vk.Result, message: string, location := #caller_location) -> Setup_Error {
+check_custom :: proc(result: vk.Result, message: string, location := #caller_location) -> ^Error(Vulkan) {
     return error(Vulkan{message, result})
 }
 
-check_default :: proc(result: vk.Result, location := #caller_location) -> Setup_Error {
+check_default :: proc(result: vk.Result, location := #caller_location) -> ^Error(Vulkan) {
     if result == .SUCCESS do return nil
     return error(Vulkan{"Vulkan Error", result})
 }

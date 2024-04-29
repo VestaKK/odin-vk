@@ -20,7 +20,7 @@ vertices := []Vertex{
 	{pos =  {-0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
 }
 
-create_graphics_pipeline :: proc(using state: ^VulkanState) -> bool {
+create_graphics_pipeline :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
 
 /*
 GraphicsPipelineCreateInfo :: struct {
@@ -160,7 +160,7 @@ GraphicsPipelineCreateInfo :: struct {
     }
 
     check(vk.CreateGraphicsPipelines(device.handle, 0, 1, &create_info, nil, &graphics_pipeline.handle)) or_return
-    return true
+    return
 } 
 
 destroy_graphics_pipeline :: proc(device: ^VulkanDevice, graphics_pipeline: ^VulkanGraphicsPipeline) {

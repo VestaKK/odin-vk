@@ -51,9 +51,10 @@ main :: proc() {
     //
 
     vks: renderer.VulkanState
-    ok := renderer.init_vulkan(&vks, window, Width, Height)
-    if !ok {
-        fmt.printf("Could not initialise vulkan state")
+    err := renderer.init_vulkan(&vks, window, Width, Height)
+    if err != nil {
+        fmt.printf("%V", err)
+        free_all(context.temp_allocator)
         os.exit(1)
     }
     defer renderer.shutdown(&vks)

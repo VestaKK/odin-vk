@@ -47,31 +47,31 @@ physical_device_get_swapchain_support :: proc(
     queue_family_index: u32
 ) -> (
     swapchain_support_info: VulkanSwapchainSupportInfo,
-    supported: bool
+    supported: bool,
 ) {
     // NOTE(matt): Check for surface support
 
     is_supported: b32
-    check(vk.GetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &is_supported)) or_return
+    pass(vk.GetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &is_supported)) or_return
     if !is_supported {
         return {}, false
     }
 
     // NOTE(matt): Populate swapchain_support_info
     capabilities: vk.SurfaceCapabilitiesKHR
-    check(vk.GetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities)) or_return
+    pass(vk.GetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &capabilities)) or_return
 
     // NOTE(matt): Formats
     format_count: u32
-    check(vk.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, nil)) or_return
+    pass(vk.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, nil)) or_return
     formats := make([]vk.SurfaceFormatKHR, format_count)
-    check(vk.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, raw_data(formats))) or_return
+    pass(vk.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, raw_data(formats))) or_return
 
     // NOTE(matt): Surface Present Modes
     mode_count: u32
-    check(vk.GetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &mode_count, nil)) or_return
+    pass(vk.GetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &mode_count, nil)) or_return
     present_modes := make([]vk.PresentModeKHR, mode_count)
-    check(vk.GetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &mode_count, raw_data(present_modes))) or_return
+    pass(vk.GetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &mode_count, raw_data(present_modes))) or_return
 
     return {capabilities, formats, present_modes}, bool(is_supported)
 }
@@ -94,10 +94,10 @@ physical_device_meets_requirements :: proc(
 
     // NOTE(matt): Check extension support
     extension_count: u32
-    check(vk.EnumerateDeviceExtensionProperties(physical_device, nil, &extension_count, nil)) or_return
+    pass(vk.EnumerateDeviceExtensionProperties(physical_device, nil, &extension_count, nil)) or_return
     extension_properties := make([]vk.ExtensionProperties, extension_count)
     defer delete(extension_properties)
-    check(vk.EnumerateDeviceExtensionProperties(physical_device, nil, &extension_count, raw_data(extension_properties))) or_return
+    pass(vk.EnumerateDeviceExtensionProperties(physical_device, nil, &extension_count, raw_data(extension_properties))) or_return
     outer: for &required in requirements.extensions {
         for &extension in extension_properties {
             extension_name := cstring(raw_data(extension.extensionName[:]))
@@ -140,7 +140,7 @@ physical_device_meets_requirements :: proc(
     return {}, {}, false
 } 
 
-select_physical_device :: proc(using state: ^VulkanState) -> bool {
+select_physical_device :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
 
     physical_device_count: u32
     check(vk.EnumeratePhysicalDevices(instance, &physical_device_count, nil)) or_return
@@ -187,18 +187,18 @@ select_physical_device :: proc(using state: ^VulkanState) -> bool {
         device.swapchain_support_info = swapchain_support_info
 
         // fmt.printf("%#v\n%#v\n", queue_family_info, swapchain_support_info)
-        return true
+        return
     }
 
-    return false 
+    return error("Could not find physical device")
 }
 
-create_device :: proc(using state: ^VulkanState) -> bool {
+
+create_device :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
     select_physical_device(state) or_return
     single_queue := device.graphics_queue_index == device.present_queue_index
     if !single_queue {
-        fmt.eprintf("We don't support separate graphics and present queues lol")
-        return false
+        return error("We don't support separate graphics and present queues lol ")
     }
     
     // TODO(chowie): Single-threaded application for now.
@@ -239,7 +239,7 @@ create_device :: proc(using state: ^VulkanState) -> bool {
         level = .PRIMARY,
     }
     check(vk.AllocateCommandBuffers(device.handle, &allocate_info, &device.command_buff)) or_return
-    return true
+    return
 }
 
 destroy_vulkan_device :: proc(using device: ^VulkanDevice) {

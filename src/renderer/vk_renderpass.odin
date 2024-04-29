@@ -27,7 +27,7 @@ record_attachment :: proc(
     attachment_refs[attachment.type] = { u32(attachment.type), attachment.layout }
 }
 
-create_render_pass :: proc(using state: ^VulkanState) -> bool {
+create_render_pass :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
 
     attachments: [VulkanAttachmentType]vk.AttachmentDescription
     attachment_refs: [VulkanAttachmentType]vk.AttachmentReference
@@ -80,7 +80,7 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
     }
     check(vk.CreateRenderPass(device.handle, &create_info, nil, &render_pass.handle)) or_return
 
-    return true
+    return
 }
 
 destroy_render_pass :: proc(device: ^VulkanDevice, render_pass: ^VulkanRenderPass) {

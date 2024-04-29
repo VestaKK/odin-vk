@@ -22,7 +22,7 @@ create_shader :: proc(
     shader_file_path: string
 ) -> (
     module: vk.ShaderModule, 
-    ok: bool
+    err: Setup_Error,
 ) {
     shader_file, _ := os.read_entire_file(shader_file_path)
     defer delete(shader_file)
@@ -32,16 +32,16 @@ create_shader :: proc(
         pCode = cast(^u32)raw_data(shader_file),
     }
     check(vk.CreateShaderModule(device, &create_info, nil, &module)) or_return
-    return module, true
+    return
 }
 
 
-create_shaders :: proc(using state: ^VulkanState) -> bool {
+create_shaders :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
     shaders[.Frag].stage = .FRAGMENT
     shaders[.Frag].module = create_shader(device.handle, "res/shaders/spv/frag.spv") or_return    
     shaders[.Vert].stage = .VERTEX
     shaders[.Vert].module = create_shader(device.handle, "res/shaders/spv/vert.spv") or_return
-    return true
+    return 
 }
 
 destroy_shaders :: proc(device: ^VulkanDevice, shaders: ^[Shader]VulkanShader) {

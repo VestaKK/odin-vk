@@ -36,30 +36,46 @@ VulkanState :: struct {
 
 // NOTE(matt): Loads vulkan lib at startup because that kinda just makes sense ig
 
-load_vulkan_dynlib :: proc() -> bool {
+LoadFail :: struct {
+    message: string,
+    last_error: string,
+}
+
+Library_Error :: union #shared_nil {
+    ^Error(Message),
+    ^Error(LoadFail),
+}
+
+load_vulkan_dynlib :: proc() -> (err: Library_Error) {
 
     // NOTE(matt): Do not load dll again if it exists already
     if vulkan_dynlib != nil {
-        return true
-    } 
+        return error("Vulkan is already loaded")
+    }
 
     // NOTE(matt): attempt to load dll into memory
     library, ok := dynlib.load_library("vulkan-1.dll")
     if !ok {
-        return false
+        return error(LoadFail{
+            "Could not load vulkan dll", 
+            dynlib.last_error()
+        })
     }
     vulkan_dynlib = library
 
     // find vkGetInstanceProcAddr
     vk_get_instance_proc, found := dynlib.symbol_address(vulkan_dynlib, "vkGetInstanceProcAddr")
     if !found {
-        return false
+        return error(
+            LoadFail{
+                "Procedure vkGetInstanceProcAddr not found", 
+                dynlib.last_error()
+            })
     }
 
     // NOTE(matt): Load global procedures only
     vk.load_proc_addresses_global(vk_get_instance_proc)
-
-    return true
+    return
 }
 
 unload_vulkan_dynlib :: proc() {
@@ -69,12 +85,17 @@ unload_vulkan_dynlib :: proc() {
     }
 }
 
+Renderer_Error :: union #shared_nil {
+    Library_Error,
+    Setup_Error,
+}
+
 // users should use free_all on context.temp_allocator if an error does occur
 init_vulkan :: proc(
     state: ^VulkanState,
     window_handle: glfw.WindowHandle,
     width, height: u32,
-) -> bool { 
+) -> (err: Renderer_Error) { 
 
     // NOTE(chowie): Segregate Win32 out of the Vulkan state
     state.window.handle = window_handle
@@ -93,7 +114,7 @@ init_vulkan :: proc(
     create_graphics_pipeline(state) or_return
     create_frame_buffers(state) or_return
 
-    return true
+    return
 }
 
 

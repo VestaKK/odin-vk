@@ -7,7 +7,6 @@ import "core:os"
 import "core:mem"
 import "vendor:glfw"
 import "renderer"
-import "platform"
 
 Width :: 640
 Height :: 480
@@ -69,5 +68,6 @@ main :: proc() {
 
     for !glfw.WindowShouldClose(window) {
         glfw.PollEvents()
+        renderer.draw(&vks)
     }
 }

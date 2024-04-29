@@ -16,7 +16,14 @@ Shader :: enum {
     Frag,
 }
 
-create_shader :: proc(device: vk.Device, shader_file_path: string) -> (module: vk.ShaderModule, ok: bool) {
+
+create_shader :: proc(
+    device: vk.Device,
+    shader_file_path: string
+) -> (
+    module: vk.ShaderModule, 
+    ok: bool
+) {
     shader_file, _ := os.read_entire_file(shader_file_path)
     defer delete(shader_file)
     create_info := vk.ShaderModuleCreateInfo {
@@ -27,6 +34,7 @@ create_shader :: proc(device: vk.Device, shader_file_path: string) -> (module: v
     check(vk.CreateShaderModule(device, &create_info, nil, &module)) or_return
     return module, true
 }
+
 
 create_shaders :: proc(using state: ^VulkanState) -> bool {
     shaders[.Frag].stage = .FRAGMENT

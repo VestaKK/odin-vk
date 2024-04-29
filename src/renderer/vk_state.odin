@@ -5,6 +5,7 @@ import "vendor:glfw"
 import "core:os"
 import "core:dynlib"
 import "core:fmt"
+import "base:runtime"
 
 // TODO(matt): Check if the library has to be unloaded at some point (probably but who knows tbh)
 @(private)
@@ -30,10 +31,11 @@ VulkanState :: struct {
     swapchain:              VulkanSwapchain,
     shaders:                [Shader]VulkanShader,
     render_pass:            VulkanRenderPass,
-    graphics_pipeline:      VulkanGraphicsPipeline,
+    graphics_pipeline:      VulkanGraphicsPipeline, 
 }
 
 // NOTE(matt): Loads vulkan lib at startup because that kinda just makes sense ig
+
 load_vulkan_dynlib :: proc() -> bool {
 
     // NOTE(matt): Do not load dll again if it exists already
@@ -44,7 +46,6 @@ load_vulkan_dynlib :: proc() -> bool {
     // NOTE(matt): attempt to load dll into memory
     library, ok := dynlib.load_library("vulkan-1.dll")
     if !ok {
-        fmt.eprintln(dynlib.last_error())
         return false
     }
     vulkan_dynlib = library
@@ -52,7 +53,6 @@ load_vulkan_dynlib :: proc() -> bool {
     // find vkGetInstanceProcAddr
     vk_get_instance_proc, found := dynlib.symbol_address(vulkan_dynlib, "vkGetInstanceProcAddr")
     if !found {
-        fmt.eprintln(dynlib.last_error())
         return false
     }
 
@@ -69,23 +69,21 @@ unload_vulkan_dynlib :: proc() {
     }
 }
 
-
-init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width: u32, height: u32) -> bool { 
-
-    //
-    // Win32
-    //
+// users should use free_all on context.temp_allocator if an error does occur
+init_vulkan :: proc(
+    state: ^VulkanState,
+    window_handle: glfw.WindowHandle,
+    width, height: u32,
+) -> bool { 
 
     // NOTE(chowie): Segregate Win32 out of the Vulkan state
     state.window.handle = window_handle
     state.window.dim = { width, height }
 
-    //
-    // 
-    //
+    // Load the vulkan-1.dll
+    load_vulkan_dynlib() or_return 
 
-    // NOTE(matt): Load the vulkan-1.dll
-    load_vulkan_dynlib() or_return
+    // Vulkan Stuff
     create_instance(state) or_return
     create_surface(state) or_return 
     create_device(state) or_return
@@ -100,7 +98,7 @@ init_vulkan :: proc(state: ^VulkanState, window_handle: glfw.WindowHandle, width
 
 
 draw :: proc(using state: ^VulkanState) {
-    
+
 }
 
 shutdown :: proc(using state: ^VulkanState) {

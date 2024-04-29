@@ -13,11 +13,10 @@ VulkanSwapchain :: struct {
     image_count:    u32,
     images:         []vk.Image,
     image_views:    []vk.ImageView,
-    frame_buffers:   []vk.Framebuffer,
-    // semaphore:      vk.Semaphore,
+    frame_buffers:  []vk.Framebuffer,
 }
 
-create_swapchain :: proc(using state: ^VulkanState, image_count:= u32(2)) -> bool {
+create_swapchain :: proc(using state: ^VulkanState, image_count := u32(2)) -> bool {
 
     // NOTE(matt): Check swapchain supports image format
     // TODO(chowie): _Block for 4x4 reading, or _PACK32?

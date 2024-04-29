@@ -2,8 +2,8 @@ package renderer
 
 import vk "vendor:vulkan"
 import "core:math/linalg"
-import "core:reflect"
 import "core:math/linalg/glsl"
+
 VulkanGraphicsPipeline :: struct {
     handle: vk.Pipeline,
 	layout: vk.PipelineLayout,
@@ -11,12 +11,13 @@ VulkanGraphicsPipeline :: struct {
 
 Vertex :: struct {
 	pos: glsl.vec3,
-	color: glsl.vec3,
+	color: glsl.vec4,
 }
+
 vertices := []Vertex{
-	{pos =  { 0.0, -0.5,  0.0}, color = {1.0, 0.0, 0.0}},
-	{pos =  { 0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0}},
-	{pos =  {-0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0}},
+	{pos =  { 0.0, -0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
+	{pos =  { 0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
+	{pos =  {-0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
 }
 
 create_graphics_pipeline :: proc(using state: ^VulkanState) -> bool {
@@ -71,8 +72,8 @@ GraphicsPipelineCreateInfo :: struct {
 		1 = {
 			binding = 0,
 			location = 1,
-			format = .R32G32B32_SFLOAT,
-			offset = size_of(linalg.Vector3f32)
+			format = .R32G32B32A32_SFLOAT,
+			offset = size_of(glsl.vec4)
 		}
 	}
 
@@ -127,6 +128,7 @@ GraphicsPipelineCreateInfo :: struct {
 	dynamic_states := []vk.DynamicState{.VIEWPORT, .SCISSOR}
 	dynamic_state := vk.PipelineDynamicStateCreateInfo{
 		sType = .PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		dynamicStateCount = u32(len(dynamic_states)),
 		pDynamicStates = raw_data(dynamic_states),
 	}
 
@@ -159,7 +161,7 @@ GraphicsPipelineCreateInfo :: struct {
 
     check(vk.CreateGraphicsPipelines(device.handle, 0, 1, &create_info, nil, &graphics_pipeline.handle)) or_return
     return true
-}
+} 
 
 destroy_graphics_pipeline :: proc(device: ^VulkanDevice, graphics_pipeline: ^VulkanGraphicsPipeline) {
 	vk.DestroyPipeline(device.handle, graphics_pipeline.handle, nil)

@@ -63,7 +63,6 @@ create_render_pass :: proc(using state: ^VulkanState) -> bool {
     }
     record_attachment(&attachments, &attachment_refs, depth_attachment)
 */
-
     sub_pass_description := vk.SubpassDescription{
         pipelineBindPoint = .GRAPHICS,
         colorAttachmentCount = 1,

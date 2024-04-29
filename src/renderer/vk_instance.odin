@@ -68,7 +68,7 @@ check_layer_support :: proc(requested_layers: []cstring) -> bool {
     defer delete(instance_layers)
     check(vk.EnumerateInstanceLayerProperties(&layer_count, raw_data(instance_layers))) or_return
 
-    outer: for &requested in  requested_layers {
+    outer: for &requested in requested_layers {
         for &existing in instance_layers {
             if requested == cstring(raw_data(existing.layerName[:])) {
                 continue outer
@@ -78,6 +78,7 @@ check_layer_support :: proc(requested_layers: []cstring) -> bool {
     }
     return true
 }
+
 
 create_instance :: proc(using state: ^VulkanState) -> bool {
 

@@ -13,6 +13,7 @@ VulkanDevice :: struct {
     graphics_queue:         vk.Queue,   
     present_queue:          vk.Queue,
     command_pool:           vk.CommandPool,
+    command_buff:           vk.CommandBuffer,
 }
 
 VulkanDeviceTypes :: distinct [vk.PhysicalDeviceType]bool
@@ -189,18 +190,17 @@ select_physical_device :: proc(using state: ^VulkanState) -> bool {
         return true
     }
 
-    return false
+    return false 
 }
 
 create_device :: proc(using state: ^VulkanState) -> bool {
     select_physical_device(state) or_return
     single_queue := device.graphics_queue_index == device.present_queue_index
-
     if !single_queue {
-        fmt.println("We don't support separate graphics and present queues lol")
+        fmt.eprintf("We don't support separate graphics and present queues lol")
         return false
     }
-
+    
     // TODO(chowie): Single-threaded application for now.
     queue_priority := f32(1)
     queue_create_info := vk.DeviceQueueCreateInfo{
@@ -226,16 +226,23 @@ create_device :: proc(using state: ^VulkanState) -> bool {
 
     command_pool_create_info := vk.CommandPoolCreateInfo{
         sType = .COMMAND_POOL_CREATE_INFO,
-        flags = {.TRANSIENT},
+        flags = {.RESET_COMMAND_BUFFER},
         queueFamilyIndex = device.graphics_queue_index,
     }
-    vk.CreateCommandPool(device.handle, &command_pool_create_info, nil, &device.command_pool)
+    check(vk.CreateCommandPool(device.handle, &command_pool_create_info, nil, &device.command_pool)) or_return
 
+    // NOTE(MATT): Check out secondary command buffers (multithreading pog!!! Possible!! wowge)
+    allocate_info := vk.CommandBufferAllocateInfo{
+        sType = .COMMAND_BUFFER_ALLOCATE_INFO,
+        commandPool = device.command_pool,
+        commandBufferCount = 1,
+        level = .PRIMARY,
+    }
+    check(vk.AllocateCommandBuffers(device.handle, &allocate_info, &device.command_buff)) or_return
     return true
 }
 
 destroy_vulkan_device :: proc(using device: ^VulkanDevice) {
-
     vk.DestroyCommandPool(device.handle, device.command_pool, nil)
     delete(swapchain_support_info.formats)
     delete(swapchain_support_info.present_modes)

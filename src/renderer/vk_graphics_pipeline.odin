@@ -14,6 +14,7 @@ Vertex :: struct {
 	color: glsl.vec4,
 }
 
+// TODO(chowie): Are we meant to add UV coordinates too?
 vertices := []Vertex{
 	{pos =  { 0.0, -0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
 	{pos =  { 0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
@@ -160,8 +161,38 @@ GraphicsPipelineCreateInfo :: struct {
     }
 
     check(vk.CreateGraphicsPipelines(device.handle, 0, 1, &create_info, nil, &graphics_pipeline.handle)) or_return
+
     return
 } 
+
+create_vertex_index_staging :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
+
+    // TODO(chowie): Should this be moved out?
+    vertex_info := vk.BufferCreateInfo {
+    	sType = .BUFFER_CREATE_INFO,
+	size = size_of(vertices), // TODO(chowie): Need + geometry index data?
+	//usage = .TRANSFER_SRC, // TODO(chowie): Legit copied the odin docs, it's wrong????
+	sharingMode = .EXCLUSIVE,
+    }
+
+    vertex_buffer : vk.Buffer
+    check(vk.CreateBuffer(device.handle, &vertex_info, nil, &vertex_buffer)) or_return
+
+    vertex_buffer_memory_reqs : vk.MemoryRequirements
+    vk.GetBufferMemoryRequirements(device.handle, vertex_buffer, &vertex_buffer_memory_reqs)
+
+    vertex_buffer_memory_info := vk.MemoryAllocateInfo {
+    	sType = .MEMORY_ALLOCATE_INFO,
+	allocationSize = vertex_buffer_memory_reqs.size,
+	memoryTypeIndex = 0, // NOTE(chowie): Type set below
+    }
+
+    // TODO(chowie): .HOST_VISIBLE? Connects to memory_props
+    //for memory_type_index in memory_properties {
+    //}
+
+    return
+}
 
 destroy_graphics_pipeline :: proc(device: ^VulkanDevice, graphics_pipeline: ^VulkanGraphicsPipeline) {
 	vk.DestroyPipeline(device.handle, graphics_pipeline.handle, nil)

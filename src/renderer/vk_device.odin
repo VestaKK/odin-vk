@@ -158,10 +158,10 @@ select_physical_device :: proc(using state: ^VulkanState) -> (err: Setup_Error) 
         features: vk.PhysicalDeviceFeatures
         vk.GetPhysicalDeviceFeatures(physical_device, &features)
 
-	    // NOTE(chowie): Main types of memory is "host visible" (RAM)
-	    // and "device local" (GPU Memory). Returning memory requirements
-	    // starts from LSB, useful for vertex buffers and textures.
-	    memory_properties: vk.PhysicalDeviceMemoryProperties
+	// NOTE(chowie): Main types of memory is "host visible" (RAM)
+        // and "device local" (GPU Memory). Returning memory requirements
+	// starts from LSB, useful for vertex buffers and textures.
+	memory_properties: vk.PhysicalDeviceMemoryProperties
         vk.GetPhysicalDeviceMemoryProperties(physical_device, &memory_properties)
 
         requirements := VulkanPhysicalDeviceRequirements{

@@ -60,8 +60,7 @@ debug_utils_messenger_callback :: proc "system" (
     return true
 }
 
-
-check_layer_support :: proc(requested_layers: []cstring) -> (err: Setup_Error) {
+check_layer_support :: proc(requested_layers: []cstring) -> bool {
 
     layer_count: u32
     check(vk.EnumerateInstanceLayerProperties(&layer_count, nil)) or_return
@@ -75,13 +74,13 @@ check_layer_support :: proc(requested_layers: []cstring) -> (err: Setup_Error) {
                 continue outer
             }
         }
-        // Okay this is a compromise
-        return error_print("Requested layer %v is unsupported", args = {requested})
+        return false
     }
-    return
+    return true
 }
 
-create_instance :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
+
+create_instance :: proc(using state: ^VulkanState) -> bool {
 
     application_info := vk.ApplicationInfo {
         sType = .APPLICATION_INFO,
@@ -136,5 +135,5 @@ create_instance :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
         check(vk.CreateDebugUtilsMessengerEXT(instance, &debug_messenger_utils_create_info, nil, &debug_messenger)) or_return
     }
 
-    return 
+    return true
 }

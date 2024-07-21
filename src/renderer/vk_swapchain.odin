@@ -16,7 +16,7 @@ VulkanSwapchain :: struct {
     frame_buffers:  []vk.Framebuffer,
 }
 
-create_swapchain :: proc(using state: ^VulkanState, image_count := u32(2)) -> (err: Setup_Error) {
+create_swapchain :: proc(using state: ^VulkanState, image_count := u32(2)) -> bool {
 
     // NOTE(matt): Check swapchain supports image format
     // TODO(chowie): _Block for 4x4 reading, or _PACK32?
@@ -94,10 +94,10 @@ create_swapchain :: proc(using state: ^VulkanState, image_count := u32(2)) -> (e
 
     check(vk.CreateSemaphore(device.handle, &semaphore_create_info, nil, &swapchain.semaphore )) or_return
 */
-    return
+    return true
 }
 
-create_frame_buffers :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
+create_frame_buffers :: proc(using state: ^VulkanState) -> bool {
 
     swapchain.frame_buffers = make([]vk.Framebuffer, swapchain.image_count) 
     for &frame_buffer, i in swapchain.frame_buffers {
@@ -114,7 +114,7 @@ create_frame_buffers :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
         check(vk.CreateFramebuffer(device.handle, &frame_buffer_create_info, nil, &frame_buffer)) or_return
     }
 
-    return
+    return true
 }
 
 destroy_frame_buffers :: proc(device: ^VulkanDevice, frame_buffers: ^[]vk.Framebuffer) {

@@ -21,7 +21,7 @@ vertices := []Vertex{
 	{pos =  {-0.5,  0.5,  0.0}, color = {1.0, 0.0, 0.0, 1.0}},
 }
 
-create_graphics_pipeline :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
+create_graphics_pipeline :: proc(using state: ^VulkanState) -> bool {
 
 /*
 GraphicsPipelineCreateInfo :: struct {
@@ -161,11 +161,10 @@ GraphicsPipelineCreateInfo :: struct {
     }
 
     check(vk.CreateGraphicsPipelines(device.handle, 0, 1, &create_info, nil, &graphics_pipeline.handle)) or_return
-
-    return
+    return true
 } 
 
-create_vertex_index_staging :: proc(using state: ^VulkanState) -> (err: Setup_Error) {
+create_vertex_index_staging :: proc(using state: ^VulkanState) -> bool {
 
     // TODO(chowie): Should this be moved out?
     vertex_info := vk.BufferCreateInfo {
